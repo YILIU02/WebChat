@@ -1,0 +1,113 @@
+{
+  "users": [
+    {
+      "id": "user-1001",
+      "telephone": "13800000001",
+      "passwordHash": "sha256:d3dec3f35387156495cbc21471313f87155f878f3435b693f50077c2be479033",
+      "userName": "林岸",
+      "avatarUrl": "/images/avatar-self.png",
+      "bio": "偏产品的前端开发者，习惯先把信息架构理顺。",
+      "friends": [
+        "user-1002",
+        "user-1003"
+      ],
+      "createdAt": "2026-06-01T09:00:00"
+    },
+    {
+      "id": "user-1002",
+      "telephone": "13800000002",
+      "passwordHash": "sha256:d3dec3f35387156495cbc21471313f87155f878f3435b693f50077c2be479033",
+      "userName": "周予",
+      "avatarUrl": "/images/avatar1.jpg",
+      "bio": "后端工程师，负责 Python 服务和接口设计。",
+      "friends": [
+        "user-1001",
+        "user-1003"
+      ],
+      "createdAt": "2026-06-01T09:05:00"
+    },
+    {
+      "id": "user-1003",
+      "telephone": "13800000003",
+      "passwordHash": "sha256:d3dec3f35387156495cbc21471313f87155f878f3435b693f50077c2be479033",
+      "userName": "沈念",
+      "avatarUrl": "/images/avatar-default.png",
+      "bio": "负责视觉和交互，关注体验细节。",
+      "friends": [
+        "user-1001",
+        "user-1002"
+      ],
+      "createdAt": "2026-06-01T09:10:00"
+    }
+  ],
+  "conversations": [
+    {
+      "id": "conv-1001",
+      "participantIds": [
+        "user-1001",
+        "user-1002"
+      ],
+      "updatedAt": "2026-06-09T13:37:20",
+      "messages": [
+        {
+          "id": "msg-1001",
+          "senderId": "user-1002",
+          "content": "Python 版接口我已经整理好了，前端直接按 REST 接就行。",
+          "createdAt": "2026-06-08T19:58:00"
+        },
+        {
+          "id": "msg-1002",
+          "senderId": "user-1001",
+          "content": "收到，我会把登录、联系人和消息流统一成一套状态管理。",
+          "createdAt": "2026-06-08T20:21:00"
+        },
+        {
+          "id": "msg-b6bbb7e4cb",
+          "senderId": "user-1002",
+          "content": "1",
+          "createdAt": "2026-06-09T13:37:06"
+        },
+        {
+          "id": "msg-75e370a63f",
+          "senderId": "user-1001",
+          "content": "2",
+          "createdAt": "2026-06-09T13:37:11"
+        },
+        {
+          "id": "msg-e718fe2469",
+          "senderId": "user-1002",
+          "content": "3",
+          "createdAt": "2026-06-09T13:37:17"
+        },
+        {
+          "id": "msg-ffa64be4cb",
+          "senderId": "user-1002",
+          "content": "6",
+          "createdAt": "2026-06-09T13:37:18"
+        },
+        {
+          "id": "msg-540df24f45",
+          "senderId": "user-1002",
+          "content": "5",
+          "createdAt": "2026-06-09T13:37:20"
+        }
+      ]
+    },
+    {
+      "id": "conv-1002",
+      "participantIds": [
+        "user-1001",
+        "user-1003"
+      ],
+      "updatedAt": "2026-06-09T08:15:00",
+      "messages": [
+        {
+          "id": "msg-1003",
+          "senderId": "user-1003",
+          "content": "背景我改成了更稳的深色玻璃质感，移动端也一起收了。",
+          "createdAt": "2026-06-09T08:15:00"
+        }
+      ]
+    }
+  ]
+}
