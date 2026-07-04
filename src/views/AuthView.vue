@@ -26,7 +26,12 @@
       <div v-if="notice" class="notice">{{ notice }}</div>
       <div v-if="errorMessage" class="notice notice-error">{{ errorMessage }}</div>
 
-      <form v-if="mode === 'login'" class="auth-form" @submit.prevent="handleLogin">
+      <form
+        v-if="mode === 'login'"
+        class="auth-form"
+        autocomplete="off"
+        @submit.prevent="handleLogin"
+      >
         <label>
           <span>手机号</span>
           <div class="phone-row">
@@ -39,7 +44,7 @@
               v-model.trim="loginForm.telephone"
               type="tel"
               placeholder="请输入手机号"
-              autocomplete="username"
+              autocomplete="off"
             />
           </div>
         </label>
@@ -50,7 +55,7 @@
             v-model="loginForm.password"
             type="password"
             placeholder="请输入密码"
-            autocomplete="current-password"
+            autocomplete="new-password"
           />
         </label>
 
@@ -190,11 +195,13 @@ const registerAvatarObjectUrl = ref('');
 
 let countdownTimer = null;
 
-const loginForm = ref({
+const createLoginForm = () => ({
   regionCode: '+86',
-  telephone: '13800000001',
-  password: 'Pass1234'
+  telephone: '',
+  password: ''
 });
+
+const loginForm = ref(createLoginForm());
 
 const createRegisterForm = () => ({
   regionCode: '+86',
@@ -258,6 +265,9 @@ const startCountdown = (seconds) => {
 
 const switchMode = (nextMode) => {
   mode.value = nextMode;
+  if (nextMode === 'login') {
+    loginForm.value = createLoginForm();
+  }
   resetMessages();
 };
 
@@ -382,9 +392,7 @@ const handleRegister = async () => {
 
     await request.post('/auth/register', formData);
     notice.value = '注册成功，请直接登录。';
-    loginForm.value.regionCode = registerForm.value.regionCode;
-    loginForm.value.telephone = registerForm.value.telephone;
-    loginForm.value.password = registerForm.value.password;
+    loginForm.value = createLoginForm();
     resetRegisterForm();
     stopCountdown();
     codeCountdown.value = 0;

@@ -3,7 +3,7 @@
     {
       "id": "user-1001",
       "telephone": "13800000001",
-      "passwordHash": "sha256:d3dec3f35387156495cbc21471313f87155f878f3435b693f50077c2be479033",
+      "passwordHash": "sha256:2363a2b08474dabea83780bc209c7d4289b066918b3d4bee2961457f9e490c3f",
       "userName": "林岸",
       "avatarUrl": "/images/avatar-self.png",
       "bio": "偏产品的前端开发者，习惯先把信息架构理顺。",
@@ -16,7 +16,7 @@
     {
       "id": "user-1002",
       "telephone": "13800000002",
-      "passwordHash": "sha256:d3dec3f35387156495cbc21471313f87155f878f3435b693f50077c2be479033",
+      "passwordHash": "sha256:2363a2b08474dabea83780bc209c7d4289b066918b3d4bee2961457f9e490c3f",
       "userName": "周予",
       "avatarUrl": "/images/avatar1.jpg",
       "bio": "后端工程师，负责 Python 服务和接口设计。",
@@ -29,7 +29,7 @@
     {
       "id": "user-1003",
       "telephone": "13800000003",
-      "passwordHash": "sha256:d3dec3f35387156495cbc21471313f87155f878f3435b693f50077c2be479033",
+      "passwordHash": "sha256:2363a2b08474dabea83780bc209c7d4289b066918b3d4bee2961457f9e490c3f",
       "userName": "沈念",
       "avatarUrl": "/images/avatar-default.png",
       "bio": "负责视觉和交互，关注体验细节。",

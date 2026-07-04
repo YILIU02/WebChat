@@ -107,14 +107,16 @@ http://127.0.0.1:5173
 npm run build
 ```
 
-## Default Seed Accounts
+## Demo Accounts
 
 - Account: `13800000001`
-  Password: `Pass1234`
+  Password: `WcDemo#2026!A7`
 - Account: `13800000002`
-  Password: `Pass1234`
+  Password: `WcDemo#2026!A7`
 - Account: `13800000003`
-  Password: `Pass1234`
+  Password: `WcDemo#2026!A7`
+
+Use these credentials for repository demos only. Do not expose them in the deployed UI or reuse them in production.
 
 ## Main APIs
 
