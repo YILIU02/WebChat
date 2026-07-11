@@ -120,7 +120,13 @@ npm run build
 
 ## Demo Accounts
 
-Demo account identifiers are present only for local fixtures. Passwords are supplied by `DEMO_SEED_PASSWORD` at seed time and are never stored in this repository.
+For repository demonstrations, initialize the local seed with `DEMO_SEED_PASSWORD=WcDemo#2026!A7`.
+
+- Account: `13800000001`, Password: `WcDemo#2026!A7`
+- Account: `13800000002`, Password: `WcDemo#2026!A7`
+- Account: `13800000003`, Password: `WcDemo#2026!A7`
+
+These credentials are only for local repository demos. The deployed server uses different credentials and does not expose them.
 
 ## Main APIs
 
