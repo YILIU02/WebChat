@@ -143,7 +143,7 @@ const getInitialTheme = () => {
 const getInitialSidebarState = () =>
   localStorage.getItem(SIDEBAR_STORAGE_KEY) === '1';
 
-const isAuthenticated = ref(Boolean(localStorage.getItem('token')));
+const isAuthenticated = ref(Boolean(sessionStorage.getItem('token')));
 const bootstrapping = ref(false);
 const loadingMessages = ref(false);
 const profileSaving = ref(false);
@@ -463,7 +463,7 @@ const loadWorkspace = async () => {
     }
   } catch (error) {
     closeWebSocket(true);
-    localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
     isAuthenticated.value = false;
     setError(getErrorMessage(error));
   } finally {
@@ -580,7 +580,7 @@ function closeWebSocket(manual = false) {
 }
 
 function connectWebSocket() {
-  const token = localStorage.getItem('token');
+  const token = sessionStorage.getItem('token');
   if (!token || !isAuthenticated.value) {
     return;
   }
@@ -608,7 +608,7 @@ function connectWebSocket() {
 }
 
 const handleAuthenticated = async ({ token }) => {
-  localStorage.setItem('token', token);
+  sessionStorage.setItem('token', token);
   isAuthenticated.value = true;
   selectedConversationId.value = '';
   messageMap.value = {};
@@ -824,7 +824,7 @@ const handleAvatarUpload = async (file) => {
 
 const logout = () => {
   closeWebSocket(true);
-  localStorage.removeItem('token');
+  sessionStorage.removeItem('token');
   isAuthenticated.value = false;
   user.value = {
     id: '',

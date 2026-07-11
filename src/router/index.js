@@ -14,7 +14,7 @@ const router = createRouter({
 
 // 路由守卫：未登录时强制跳转至登录页（符合文档中登录后才能访问主页面的逻辑）
 router.beforeEach((to, from, next) => {
-  if (to.meta.requiresAuth && !localStorage.getItem('token')) {
+  if (to.meta.requiresAuth && !sessionStorage.getItem('token')) {
     next('/auth'); // 未登录则跳转到登录页
   } else {
     next(); // 已登录或无需登录的页面直接放行

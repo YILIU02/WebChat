@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import secrets
 import threading
 import uuid
+from collections import defaultdict, deque
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Callable
@@ -16,42 +18,82 @@ from flask_sock import Sock
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from db import (
-    add_friendship_pair,
-    consume_verification_code,
-    count_verification_codes_since,
-    create_friend_request,
-    create_message,
-    create_user,
-    create_verification_code,
-    get_friend_request_by_id,
-    get_conversation_by_id,
-    get_conversation_summary,
-    get_friend_profile,
-    get_friendship,
-    get_latest_verification_code,
-    get_or_create_conversation,
-    get_pending_friend_request_between,
-    get_user_by_id,
-    get_user_by_phone,
-    increment_verification_code_attempts,
-    initialize_database,
-    list_conversations_for_user,
-    list_discover_users,
-    list_friend_ids,
-    list_friend_requests_for_user,
-    list_messages_for_conversation,
-    remove_friendship_pair,
-    update_friend_remark,
-    update_friend_request_status,
-    update_user_avatar,
-    update_user_password_hash,
-    update_user_profile,
-)
+try:
+    from .db import (
+        add_friendship_pair,
+        consume_verification_code,
+        count_verification_codes_since,
+        create_friend_request,
+        create_message,
+        create_user,
+        create_verification_code,
+        get_friend_request_by_id,
+        get_conversation_by_id,
+        get_conversation_summary,
+        get_friend_profile,
+        get_friendship,
+        get_latest_verification_code,
+        get_or_create_conversation,
+        get_pending_friend_request_between,
+        get_user_by_id,
+        get_user_by_phone,
+        increment_verification_code_attempts,
+        initialize_database,
+        list_conversations_for_user,
+        list_discover_users,
+        list_friend_ids,
+        list_friend_requests_for_user,
+        list_messages_for_conversation,
+        remove_friendship_pair,
+        update_friend_remark,
+        update_friend_request_status,
+        update_user_avatar,
+        update_user_password_hash,
+        update_user_profile,
+    )
+except ImportError:
+    from db import (
+        add_friendship_pair,
+        consume_verification_code,
+        count_verification_codes_since,
+        create_friend_request,
+        create_message,
+        create_user,
+        create_verification_code,
+        get_friend_request_by_id,
+        get_conversation_by_id,
+        get_conversation_summary,
+        get_friend_profile,
+        get_friendship,
+        get_latest_verification_code,
+        get_or_create_conversation,
+        get_pending_friend_request_between,
+        get_user_by_id,
+        get_user_by_phone,
+        increment_verification_code_attempts,
+        initialize_database,
+        list_conversations_for_user,
+        list_discover_users,
+        list_friend_ids,
+        list_friend_requests_for_user,
+        list_messages_for_conversation,
+        remove_friendship_pair,
+        update_friend_remark,
+        update_friend_request_status,
+        update_user_avatar,
+        update_user_password_hash,
+        update_user_profile,
+    )
 
 
-TOKEN_SECRET = "chat-companion-local-secret"
+TOKEN_SECRET = os.getenv("TOKEN_SECRET", "").strip()
+if not TOKEN_SECRET:
+    if os.getenv("FLASK_ENV", "").lower() == "production":
+        raise RuntimeError("TOKEN_SECRET must be configured in production")
+    TOKEN_SECRET = secrets.token_urlsafe(48)
 TOKEN_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
+LOGIN_RATE_WINDOW_SECONDS = 15 * 60
+LOGIN_RATE_MAX_ATTEMPTS = 8
 PHONE_RULES = {
     "+86": {
         "country": "中国",
@@ -68,6 +110,8 @@ FRIEND_REQUEST_MESSAGE_MAX_LENGTH = 50
 CHAT_MESSAGE_MAX_LENGTH = 1000
 SOCKET_LOCK = threading.Lock()
 ACTIVE_SOCKETS: dict[str, set[Any]] = {}
+LOGIN_ATTEMPTS: dict[str, deque[float]] = defaultdict(deque)
+LOGIN_ATTEMPTS_LOCK = threading.Lock()
 APP_ROOT = Path(__file__).resolve().parent
 PROJECT_ROOT = APP_ROOT.parent
 PUBLIC_AVATAR_DIR = PROJECT_ROOT / "public" / "uploads" / "avatars"
@@ -77,13 +121,60 @@ MAX_AVATAR_SIZE = 3 * 1024 * 1024
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = MAX_AVATAR_SIZE
 app.config["SECRET_KEY"] = TOKEN_SECRET
+cors_origins = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174",
+)
 CORS(
     app,
-    resources={r"/api/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"]}},
+    resources={
+        r"/api/*": {
+            "origins": [item.strip() for item in cors_origins.split(",") if item.strip()]
+        }
+    },
     supports_credentials=False,
 )
 sock = Sock(app)
 token_serializer = URLSafeTimedSerializer(TOKEN_SECRET, salt="auth-token")
+
+
+def client_ip() -> str:
+    forwarded = request.headers.get("X-Forwarded-For", "").split(",", 1)[0].strip()
+    return forwarded or request.remote_addr or "unknown"
+
+
+def login_rate_key(region_code: str, telephone: str) -> str:
+    return f"{client_ip()}:{region_code}:{telephone}"
+
+
+def login_is_limited(key: str) -> bool:
+    cutoff = datetime.now().timestamp() - LOGIN_RATE_WINDOW_SECONDS
+    with LOGIN_ATTEMPTS_LOCK:
+        attempts = LOGIN_ATTEMPTS[key]
+        while attempts and attempts[0] <= cutoff:
+            attempts.popleft()
+        return len(attempts) >= LOGIN_RATE_MAX_ATTEMPTS
+
+
+def record_login_failure(key: str) -> None:
+    with LOGIN_ATTEMPTS_LOCK:
+        LOGIN_ATTEMPTS[key].append(datetime.now().timestamp())
+
+
+def clear_login_failures(key: str) -> None:
+    with LOGIN_ATTEMPTS_LOCK:
+        LOGIN_ATTEMPTS.pop(key, None)
+
+
+@app.after_request
+def add_security_headers(response):
+    response.headers.setdefault("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'")
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    response.headers.setdefault("Cache-Control", "no-store")
+    return response
 
 
 def now() -> datetime:
@@ -630,6 +721,12 @@ def login():
     region_code = str(payload.get("regionCode", "+86")).strip()
     telephone = str(payload.get("telephone", "")).strip()
     password = str(payload.get("password", "")).strip()
+    rate_key = login_rate_key(region_code, telephone)
+
+    if login_is_limited(rate_key):
+        response = fail("登录尝试过于频繁，请稍后再试。", 429)
+        response[0].headers["Retry-After"] = str(LOGIN_RATE_WINDOW_SECONDS)
+        return response
 
     if not validate_region_code(region_code):
         return fail("暂不支持该地区号。", 401)
@@ -638,8 +735,10 @@ def login():
 
     user = get_user_by_phone(region_code, telephone)
     if not user or not verify_password(user, password):
+        record_login_failure(rate_key)
         return fail("手机号或密码错误。", 401)
 
+    clear_login_failures(rate_key)
     refreshed_user = get_user_by_id(user["id"])
     return success(
         {
@@ -976,4 +1075,7 @@ initialize_database()
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=8083, debug=True, use_reloader=False)
+    host = os.getenv("HOST", "127.0.0.1")
+    port = int(os.getenv("PORT", "8083"))
+    debug = os.getenv("DEBUG", "").strip().lower() in {"1", "true", "yes", "on"}
+    app.run(host=host, port=port, debug=debug, use_reloader=False)

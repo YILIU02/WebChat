@@ -13,6 +13,11 @@ dist
 dist-ssr
 coverage
 *.local
+.env
+.env.*
+!.env.example
+*.pem
+*.key
 
 /cypress/videos/
 /cypress/screenshots/

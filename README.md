@@ -107,16 +107,20 @@ http://127.0.0.1:5173
 npm run build
 ```
 
+## Production security
+
+- Set a unique `TOKEN_SECRET`; production startup fails when it is missing.
+- Authentication is limited to 8 attempts per IP/account in 15 minutes. The Nginx template adds an independent login limit.
+- Authentication tokens use `sessionStorage`, so closing the browser session clears them.
+- Keep the backend bound to `127.0.0.1`; expose only Nginx ports 80/443.
+- Copy `.env.example` to a server-only `.env` and replace every placeholder. Never commit `.env`.
+- The bundled demo users are disabled by default. To initialize an empty deployment, set `ENABLE_DEMO_SEED=true` and a unique `DEMO_SEED_PASSWORD`; the importer replaces all bundled password hashes.
+- Use `deploy/nginx.conf` as the site template. The current IP-only deployment remains HTTP; add a domain and a trusted certificate before enabling HTTPS and HSTS.
+- After enabling TLS, redirect port 80 to HTTPS and add `Strict-Transport-Security: max-age=31536000; includeSubDomains` only on the HTTPS server.
+
 ## Demo Accounts
 
-- Account: `13800000001`
-  Password: `WcDemo#2026!A7`
-- Account: `13800000002`
-  Password: `WcDemo#2026!A7`
-- Account: `13800000003`
-  Password: `WcDemo#2026!A7`
-
-Use these credentials for repository demos only. Do not expose them in the deployed UI or reuse them in production.
+Demo account identifiers are present only for local fixtures. Passwords are supplied by `DEMO_SEED_PASSWORD` at seed time and are never stored in this repository.
 
 ## Main APIs
 

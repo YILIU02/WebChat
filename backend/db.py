@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 import uuid
 from pathlib import Path
 from typing import Any
+
+from werkzeug.security import generate_password_hash
 
 
 APP_ROOT = Path(__file__).resolve().parent
@@ -274,7 +277,12 @@ def initialize_database() -> None:
 
         user_count = connection.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         if user_count == 0:
-            import_store(connection, load_seed_store())
+            if os.getenv("ENABLE_DEMO_SEED", "").strip().lower() not in {"1", "true", "yes", "on"}:
+                return
+            demo_password = os.getenv("DEMO_SEED_PASSWORD", "")
+            if len(demo_password) < 12:
+                raise RuntimeError("Set a DEMO_SEED_PASSWORD of at least 12 characters before enabling demo seed data")
+            import_store(connection, load_seed_store(), demo_password)
 
 
 def load_seed_store() -> dict[str, Any]:
@@ -288,7 +296,7 @@ def load_seed_store() -> dict[str, Any]:
     return DEFAULT_STORE
 
 
-def import_store(connection: sqlite3.Connection, store: dict[str, Any]) -> None:
+def import_store(connection: sqlite3.Connection, store: dict[str, Any], demo_password: str | None = None) -> None:
     for raw_user in store.get("users", []):
         created_at = raw_user.get("createdAt") or "2026-06-01T00:00:00"
         phone_verified_at = raw_user.get("phoneVerifiedAt") or created_at
@@ -311,7 +319,7 @@ def import_store(connection: sqlite3.Connection, store: dict[str, Any]) -> None:
                 raw_user["id"],
                 raw_user.get("regionCode", "+86"),
                 raw_user["telephone"],
-                raw_user["passwordHash"],
+                generate_password_hash(demo_password) if demo_password else raw_user["passwordHash"],
                 raw_user["userName"],
                 raw_user.get("avatarUrl") or "/images/avatar-default.png",
                 raw_user.get("bio", ""),

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8083/api';
+  import.meta.env.VITE_API_BASE_URL || '/api';
 
 const request = axios.create({
   baseURL: API_BASE_URL,
@@ -9,7 +9,7 @@ const request = axios.create({
 });
 
 request.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = sessionStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -44,7 +44,10 @@ request.interceptors.response.use(
 export const getErrorMessage = (error) => error?.message || '请求失败';
 
 export const buildWebSocketUrl = (token) => {
-  const url = new URL(API_BASE_URL);
+  const baseUrl = /^https?:\/\//i.test(API_BASE_URL)
+    ? API_BASE_URL
+    : `${window.location.origin}${API_BASE_URL.startsWith('/') ? '' : '/'}${API_BASE_URL}`;
+  const url = new URL(baseUrl);
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
   url.pathname = '/ws';
   url.search = new URLSearchParams({ token }).toString();
